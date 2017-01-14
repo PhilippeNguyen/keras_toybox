@@ -30,13 +30,13 @@ class oneDGauss(Layer):
         return dict(list(base_config.items()) + list(config.items()))
         
 def negativeLogLikelihood(unused_response_vector, model_output):
-    #y_true is unused
     return K.mean(-K.log(model_output), axis=-1)
 def negativeLikelihood(unused_response_vector, model_output):
     return -K.prod(model_output, axis=None)
+def negativeLogLikelihood2(unused_response_vector, model_output):
+    return -K.log(K.prod(model_output, axis=None))
     
-    
-def testOneDGauss(mean,std,nSamples = 20):
+def testOneDGauss(mean,std,nSamples = 1000):
     data = np.random.randn(nSamples)
     data = (data*std) + mean
     
@@ -46,10 +46,10 @@ def testOneDGauss(mean,std,nSamples = 20):
     output = oneDGauss()(inputLayer)
     optimizerFunction = keras.optimizers.Adam()
     model = keras.models.Model(input=inputLayer,output =output)
-    model.compile(loss=negativeLikelihood, optimizer=optimizerFunction)
+    model.compile(loss=negativeLogLikelihood, optimizer=optimizerFunction)
     earlyStop=keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, verbose=0, mode='auto')
 
-    model.fit(data,zeroVector,batch_size=nSamples,
+    model.fit(data,zeroVector,batch_size=20,
                                 callbacks=[ earlyStop],
                                 validation_data=(data,zeroVector),
                                 nb_epoch = 2000,verbose = 2)
